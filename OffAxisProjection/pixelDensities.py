@@ -5,7 +5,7 @@ def pixel_densities(px, py, particle_masses, bottom_left, top_right,
                     resolution, num_particles):
     """ Outputs a numpy array with the particle mass density of each pixel
     """
-    density_array = np.zeros(resolution, dtype='int32')
+    density_array = np.zeros(resolution, dtype='float_')
     dx = (top_right[0] - bottom_left[0])/resolution[0]
     dy = (top_right[1] - bottom_left[1])/resolution[1]
     square_area = dx * dy
