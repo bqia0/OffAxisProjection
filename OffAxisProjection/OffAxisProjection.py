@@ -11,7 +11,10 @@ def get_rotation_matrix_COB(normal_vector):
     z_axis = np.array([0., 0., 1.], dtype='float')
     normal_unit_vector = np.divide(normal_vector,
                                    linalg.norm(normal_vector))
-
+    # we can't have identical or parallel vectors
+    if np.allclose(linalg.norm(np.cross(normal_unit_vector, z_axis)), 0,
+                   rtol=1e-09):
+        return -1
     # Construct change of basis matrix
     basis_vector_b = normal_unit_vector \
         - np.multiply(np.dot(normal_unit_vector, z_axis), z_axis)
@@ -42,10 +45,15 @@ def get_rotation_matrix(normal_vector):
     """
     if np.shape(normal_vector) != (3, ):
         return -1
+
     z_axis = np.array([0., 0., 1.], dtype='float')
     normal_unit_vector = np.divide(normal_vector,
                                    linalg.norm(normal_vector))
     v = np.cross(z_axis, normal_unit_vector)
+    s = linalg.norm(v)
+    # we can't have identical or parallel vectors
+    if np.isclose(s, 0, rtol=1e-09):
+        return -1
     c = np.dot(z_axis, normal_unit_vector)
     cross_product_matrix = np.matrix([[0, -1 * v[2], v[1]],
                                       [v[2], 0, -1 * v[0]],
