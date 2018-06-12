@@ -1,6 +1,6 @@
 import numpy as np
-import OffAxisProjection.pixelDensities as pd
-
+import OffAxisProjection.OnAxisProjection as OnAP
+import OffAxisProjection.OffAxisProjection as OffAP
 
 class TestClass(object):
     def test_density_array_correct_sum(self):
@@ -40,19 +40,20 @@ class TestClass(object):
         bottom_left = [0, 0]
         top_right = [1, 1]
 
-        resolution = (512,512)
+        resolution = (512, 512)
         dx = (top_right[0] - bottom_left[0])/resolution[0]
         dy = (top_right[1] - bottom_left[1])/resolution[1]
         square_area = dx * dy
-        density_array = pd.pixel_densities(px,
-                                           py,
-                                           particle_masses,
-                                           bottom_left,
-                                           top_right,
-                                           resolution,
-                                           num_particles)
-        density_array *= square_area
-        assert np.isclose(np.sum(density_array), np.sum(particle_masses),
+        projection_array = np.zeros(resolution, dtype='float_')
+        OnAP.create_projection(px,
+                               py,
+                               particle_masses,
+                               bottom_left,
+                               top_right,
+                               projection_array
+                               )
+        projection_array = np.multiply(projection_array, square_area)
+        assert np.isclose(np.sum(projection_array), np.sum(particle_masses),
                           rtol=1e-09)
 
     def test_locations_correct(self):
@@ -73,13 +74,61 @@ class TestClass(object):
         top_right = [rand_x, rand_y]
 
         resolution = (rand_x, rand_y)
-        density_array = pd.pixel_densities(px,
-                                           py,
-                                           particle_masses,
-                                           bottom_left,
-                                           top_right,
-                                           resolution,
-                                           num_particles)
+        density_array = np.zeros(resolution, dtype='float_')
+        OnAP.create_projection(px,
+                               py,
+                               particle_masses,
+                               bottom_left,
+                               top_right,
+                               density_array
+                               )
         for x, y in zip(px, py):
             density_array[x, y] -= 1
         assert np.sum(density_array) == 0
+
+    def test_rotation_matrix(self):
+        normal_vector = np.array([0, 1, 0])
+        test_point = np.array([1, 0, 0])
+        rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+        assert np.allclose(np.matmul(rotation_matrix, test_point),
+                           np.array([[1., 0., 0.]]), rtol=1e-09)
+        normal_vector = np.array([0, 1, 0])
+        test_point = np.array([0, 0, 1])
+        rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+        assert np.allclose(np.matmul(rotation_matrix, test_point),
+                           np.array([[0., 1., 0.]]), rtol=1e-09)
+        normal_vector = np.array([1, 0, 0])
+        test_point = np.array([0, 0, 1])
+        rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+        assert np.allclose(np.matmul(rotation_matrix, test_point),
+                           np.array([[1., 0., 0.]]), rtol=1e-09)
+
+    def test_rotations(self):
+        normal_vector = np.array([0, 1, 0])
+        test_point = np.array([0, 0, 2])
+        rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+        assert np.allclose(np.matmul(rotation_matrix, test_point),
+                           np.array([[0., 2., 0.]]), rtol=1e-09)
+        normal_vector = np.array([1, 0, 0])
+        test_point = np.array([0, 0, 2])
+        rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+        assert np.allclose(np.matmul(rotation_matrix, test_point),
+                           np.array([[2., 0., 0.]]), rtol=1e-09)
+        normal_vector = np.array([0, 1, 0])
+        test_point = np.array([0, 0, 1])
+        rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+        assert np.allclose(np.matmul(rotation_matrix, test_point),
+                           np.array([[0., 1., 0.]]), rtol=1e-09)
+        normal_vector = np.array([0, 1, 0])
+        test_point = np.array([0, 1, 1])
+        rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+        print(np.matmul(rotation_matrix, test_point))
+        assert np.allclose(np.matmul(rotation_matrix, test_point),
+                           np.array([[0., 1., -1.]]), rtol=1e-09)
+        normal_vector = np.array([1, 0, 0])
+        test_point = np.array([1, 0, 1])
+        rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+        print(np.matmul(rotation_matrix, test_point))
+        assert np.allclose(np.matmul(rotation_matrix, test_point),
+                           np.array([[1., 0., -1.]]), rtol=1e-09)
+

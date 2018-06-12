@@ -1,11 +1,13 @@
 import numpy as np
 
 
-def pixel_densities(px, py, particle_masses, bottom_left, top_right,
-                    resolution, num_particles):
+def create_projection(px, py, particle_masses, bottom_left, top_right,
+                      projection_array):
     """ Outputs a numpy array with the particle mass density of each pixel
     """
-    density_array = np.zeros(resolution, dtype='float_')
+
+    resolution = np.shape(projection_array)
+    num_particles = min(np.size(px), np.size(py), np.size(particle_masses))
     dx = (top_right[0] - bottom_left[0])/resolution[0]
     dy = (top_right[1] - bottom_left[1])/resolution[1]
     square_area = dx * dy
@@ -15,10 +17,9 @@ def pixel_densities(px, py, particle_masses, bottom_left, top_right,
         image_pixel_coordinates = pixel_coordinates(x_coordinate, y_coordinate,
                                                     top_right, bottom_left,
                                                     resolution)
-        density_array[int(image_pixel_coordinates[0]),
-                      int(image_pixel_coordinates[1])] += particle_masses[i]
-    density_array = np.divide(density_array, square_area)
-    return density_array
+        projection_array[int(image_pixel_coordinates[0]),
+                         int(image_pixel_coordinates[1])] += particle_masses[i]
+    projection_array /= square_area
 
 
 def pixel_coordinates(x, y, top_right, bottom_left, resolution):
