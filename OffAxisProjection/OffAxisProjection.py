@@ -98,16 +98,17 @@ def create_projection(px, py, particle_masses, bottom_left, top_right,
                                                     resolution)
         density_array[int(image_pixel_coordinates[0]),
                       int(image_pixel_coordinates[1])] += particle_masses[i]
-    density_array = np.divide(density_array, square_area)
+    density_array /= square_area
 
     # Construct projected array
     rotation_matrix = get_rotation_matrix(normal_vector)
     for index, i in np.ndenumerate(density_array):
         coordinate_matrix = np.array([index[0], index[1], 0.], dtype='float_')
-        new_coordinates = np.matmul(rotation_matrix, coordinate_matrix)
-
+        new_coordinates = np.zeros(3)
+        np.matmul(rotation_matrix, coordinate_matrix, new_coordinates)
         # outside range of image
-        if new_coordinates[0] >= resolution[0] or new_coordinates[1] >= resolution[1]:
+        if new_coordinates[0] >= resolution[0] \
+                or new_coordinates[1] >= resolution[1]:
             continue
         if new_coordinates[0] < 0 or new_coordinates[1] < 0:
             continue

@@ -34,18 +34,15 @@ def test_projection():
     bottom_left = [0, 0]
     top_right = [1, 1]
     normal_vector = np.array([0, 0, 1])
-    resolution = (64, 64)
+    resolution = (512, 512)
     projection_array = np.zeros(resolution)
     OffAP.create_projection(px, py, particle_masses, bottom_left, top_right,
                             normal_vector, projection_array)
-    #print(projection_array)
     projection_array_1 = np.zeros(resolution)
     OnAP.create_projection(px, py, particle_masses, bottom_left, top_right,
                            projection_array_1)
-    #print(projection_array_1)
-    #assert np.allclose(projection_array, projection_array_1, rtol=1e-05)
-    print(projection_array[34, 23])
-    print(projection_array_1[34, 23])
+    assert np.allclose(projection_array, projection_array_1, rtol=1e-09)
+
 
 def main():
     test_projection()

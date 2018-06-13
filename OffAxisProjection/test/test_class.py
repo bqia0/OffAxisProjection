@@ -132,3 +132,43 @@ class TestClass(object):
         assert np.allclose(np.matmul(rotation_matrix, test_point),
                            np.array([[1., 0., -1.]]), rtol=1e-09)
 
+    def test_projection(self):
+        num_particles = 3000
+
+        # px and py contains randomly generated values between 0 and 1
+        px = np.random.random(num_particles)
+        py = np.random.random(num_particles)
+        particle_masses = np.random.random(num_particles)
+        bottom_left = [0, 0]
+        top_right = [1, 1]
+        normal_vector = np.array([0, 0, 1])
+        resolution = (64, 64)
+        projection_array = np.zeros(resolution)
+        OffAP.create_projection(px, py, particle_masses, bottom_left,
+                                top_right, normal_vector, projection_array)
+        projection_array_1 = np.zeros(resolution)
+        OnAP.create_projection(px, py, particle_masses, bottom_left, top_right,
+                               projection_array_1)
+        assert np.allclose(projection_array, projection_array_1, rtol=1e-09)
+
+    def test_chunking(self):
+        num_particles = 3000
+        px = np.random.random(num_particles)
+        py = np.random.random(num_particles)
+        particle_masses = np.random.random(num_particles)
+        bottom_left = [0, 0]
+        top_right = [1, 1]
+        normal_vector = np.array([3, 5, 6])
+        resolution = (512, 512)
+        projection_array = np.zeros(resolution)
+        projection_array_1 = np.zeros(resolution)
+        for i in range(3):
+            OffAP.create_projection(px[i * 1000: (i+1) * 1000],
+                                    py[i * 1000: (i+1) * 1000],
+                                    particle_masses[i * 1000: (i+1) * 1000],
+                                    bottom_left,
+                                    top_right, normal_vector, projection_array)
+
+        OffAP.create_projection(px, py, particle_masses, bottom_left,
+                                top_right, normal_vector, projection_array_1)
+        assert np.allclose(projection_array, projection_array_1, rtol=1e-09)
