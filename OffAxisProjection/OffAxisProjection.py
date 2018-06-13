@@ -46,25 +46,24 @@ def get_rotation_matrix(normal_vector):
     if np.shape(normal_vector) != (3, ):
         return -1
 
-    z_axis = np.array([0., 0., 1.], dtype='float')
-    normal_unit_vector = np.divide(normal_vector,
-                                   linalg.norm(normal_vector))
+    z_axis = np.array([0., 0., 1.], dtype='float_')
+    normal_unit_vector = normal_vector / linalg.norm(normal_vector)
     v = np.cross(z_axis, normal_unit_vector)
     s = linalg.norm(v)
     c = np.dot(z_axis, normal_unit_vector)
     # if the normal vector is identical to the z-axis, just return the
     # identity matrix
     if np.isclose(c, 1, rtol=1e-09):
-        return np.identity(3)
+        return np.identity(3, dtype='float_')
     # if the normal vector is the negative z-axis, return error
     if np.isclose(s, 0, rtol=1e-09):
         return -1
 
-    cross_product_matrix = np.matrix([[0, -1 * v[2], v[1]],
-                                      [v[2], 0, -1 * v[0]],
-                                      [-1 * v[1], v[0], 0]], dtype='float')
+    cross_product_matrix = np.array([[0, -1 * v[2], v[1]],
+                                    [v[2], 0, -1 * v[0]],
+                                    [-1 * v[1], v[0], 0]], dtype='float_')
     rotation_matrix = np.identity(3) + cross_product_matrix \
-        + np.matmul(cross_product_matrix, cross_product_matrix) \
+        + cross_product_matrix @ cross_product_matrix \
         * 1/(1+c)
     return rotation_matrix
 
@@ -104,8 +103,7 @@ def create_projection(px, py, particle_masses, bottom_left, top_right,
     rotation_matrix = get_rotation_matrix(normal_vector)
     for index, i in np.ndenumerate(density_array):
         coordinate_matrix = np.array([index[0], index[1], 0.], dtype='float_')
-        new_coordinates = np.zeros(3)
-        np.matmul(rotation_matrix, coordinate_matrix, new_coordinates)
+        new_coordinates = rotation_matrix @ coordinate_matrix
         # outside range of image
         if new_coordinates[0] >= resolution[0] \
                 or new_coordinates[1] >= resolution[1]:
