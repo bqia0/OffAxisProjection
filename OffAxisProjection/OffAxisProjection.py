@@ -57,7 +57,7 @@ def get_rotation_matrix(normal_vector):
         return np.identity(3, dtype='float_')
     # if the normal vector is the negative z-axis, return error
     if np.isclose(s, 0, rtol=1e-09):
-        return -1
+        return np.zeros((3,3), dtype='float_')
 
     cross_product_matrix = np.array([[0, -1 * v[2], v[1]],
                                     [v[2], 0, -1 * v[0]],
@@ -78,6 +78,9 @@ def create_projection(px, py, particle_masses, bottom_left, top_right,
     # default normal vector
     if normal_vector is None:
         normal_vector = np.array([0, 0, 1])
+
+    if np.allclose(normal_vector, np.array([0., 0., 0.]), rtol=1e-09):
+        return
 
     resolution = np.shape(projection_array)
     num_particles = min(np.size(px), np.size(py), np.size(particle_masses))
