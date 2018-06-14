@@ -57,7 +57,7 @@ def get_rotation_matrix(normal_vector):
         return np.identity(3, dtype='float_')
     # if the normal vector is the negative z-axis, return error
     if np.isclose(s, 0, rtol=1e-09):
-        return np.zeros((3,3), dtype='float_')
+        return np.zeros((3, 3), dtype='float_')
 
     cross_product_matrix = np.array([[0, -1 * v[2], v[1]],
                                     [v[2], 0, -1 * v[0]],
@@ -68,54 +68,52 @@ def get_rotation_matrix(normal_vector):
     return rotation_matrix
 
 
-def create_projection(px, py, particle_masses, bottom_left, top_right,
-                      normal_vector, projection_array):
+def create_projection(px, py, pz, particle_masses, bottom_left, top_right,
+                      projection_array, normal_vector=np.array([0, 0, 1])):
     """ Creates a numpy array with the particle mass density of each pixel
         Viewed from the perspective of normal_vector
         Function can take the whole dataset or data in chunks
         Function modifies projection_array
     """
-    # default normal vector
-    if normal_vector is None:
-        normal_vector = np.array([0, 0, 1])
-
     if np.allclose(normal_vector, np.array([0., 0., 0.]), rtol=1e-09):
         return
 
     resolution = np.shape(projection_array)
-    num_particles = min(np.size(px), np.size(py), np.size(particle_masses))
+    num_particles = min(np.size(px), np.size(py), np.size(pz),
+                        np.size(particle_masses))
     density_array = np.zeros(resolution, dtype='float_')
     dx = (top_right[0] - bottom_left[0])/resolution[0]
     dy = (top_right[1] - bottom_left[1])/resolution[1]
     square_area = dx * dy
+    rotation_matrix = get_rotation_matrix(normal_vector)
+
     for i in range(num_particles):
         x_coordinate = px[i]
         y_coordinate = py[i]
+        z_coordinate = pz[i]
         if x_coordinate > top_right[0] or y_coordinate > top_right[1]:
             continue
         if x_coordinate < bottom_left[0] or y_coordinate < bottom_left[1]:
             continue
-        image_pixel_coordinates = pixel_coordinates(x_coordinate, y_coordinate,
+        if z_coordinate < bottom_left[2] or z_coordinate > top_right[2]:
+            continue
+        coordinate_matrix = np.array([x_coordinate, y_coordinate, z_coordinate], dtype='float_')
+        new_coordinates = rotation_matrix @ coordinate_matrix
+
+        image_pixel_coordinates = pixel_coordinates(new_coordinates[0],
+                                                    new_coordinates[1],
                                                     top_right, bottom_left,
                                                     resolution)
+        if image_pixel_coordinates[0] < 0 or image_pixel_coordinates[0] >= resolution[0]:
+            continue
+        if image_pixel_coordinates[1] < 0 or image_pixel_coordinates[1] >= resolution[1]:
+            continue
         density_array[int(image_pixel_coordinates[0]),
                       int(image_pixel_coordinates[1])] += particle_masses[i]
     density_array /= square_area
-
-    # Construct projected array
-    rotation_matrix = get_rotation_matrix(normal_vector)
     for index, i in np.ndenumerate(density_array):
-        coordinate_matrix = np.array([index[0], index[1], 0.], dtype='float_')
-        new_coordinates = rotation_matrix @ coordinate_matrix
-        # outside range of image
-        if new_coordinates[0] >= resolution[0] \
-                or new_coordinates[1] >= resolution[1]:
-            continue
-        if new_coordinates[0] < 0 or new_coordinates[1] < 0:
-            continue
-
-        projection_array[int(new_coordinates[0]), int(new_coordinates[1])] \
-            += density_array[index[0], index[1]]
+        projection_array[index[0], index[1]] += \
+            density_array[index[0], index[1]]
 
 
 def pixel_coordinates(x, y, top_right, bottom_left, resolution):
