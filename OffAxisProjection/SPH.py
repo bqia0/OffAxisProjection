@@ -1,12 +1,12 @@
 import numpy as np
 import numpy.linalg as linalg
 import yt
-from yt.utilities.lib import pixelization_routines
+from yt.utilities.lib import pixelization_routines as pr
 import OffAxisProjection.OffAxisProjection as OffAP
 import math
 
-def off_axis_projection_SPH(px, py, particle_masses, particle_densities,
-                            smoothing_lengths, bottom_left, top_right, 
+def off_axis_projection_SPH(px, py, pz, particle_masses, particle_densities,
+                            smoothing_lengths, bounds,
                             projection_array, normal_vector):
     if np.allclose(normal_vector, np.array([0., 0., 0.]), rtol=1e-09):
         return
@@ -14,34 +14,41 @@ def off_axis_projection_SPH(px, py, particle_masses, particle_densities,
     resolution = np.shape(projection_array)
     num_particles = min(np.size(px), np.size(py), np.size(pz),
                         np.size(particle_masses))
-    density_array = np.zeros(resolution, dtype='float_')
-    dx = (top_right[0] - bottom_left[0])/resolution[0]
-    dy = (top_right[1] - bottom_left[1])/resolution[1]
-    rotation_matrix = get_rotation_matrix(normal_vector)
-
+    rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
+    px_rotated = np.zeros(num_particles)
+    py_rotated = np.zeros(num_particles)
     for i in range(num_particles):
         x_coordinate = px[i]
         y_coordinate = py[i]
         z_coordinate = pz[i]
-        if x_coordinate > top_right[0] or y_coordinate > top_right[1]:
+        if x_coordinate > bounds[1] or y_coordinate > bounds[3]:
             continue
-        if x_coordinate < bottom_left[0] or y_coordinate < bottom_left[1]:
+        if x_coordinate < bounds[0] or y_coordinate < bounds[2]:
             continue
-        if z_coordinate < bottom_left[2] or z_coordinate > top_right[2]:
+        if z_coordinate < bounds[4] or z_coordinate > bounds[5]:
             continue
         coordinate_matrix = np.array([x_coordinate, y_coordinate, z_coordinate], dtype='float_')
         new_coordinates = rotation_matrix @ coordinate_matrix
 
-        image_pixel_coordinates = pixel_coordinates(new_coordinates[0],
-                                                    new_coordinates[1],
-                                                    top_right, bottom_left,
-                                                    resolution)
-        if image_pixel_coordinates[0] < 0 or image_pixel_coordinates[0] >= resolution[0]:
+        # image_pixel_coordinates = pixel_coordinates(new_coordinates[0],
+        #                                             new_coordinates[1],
+        #                                             top_right, bottom_left,
+        #                                             resolution)
+        if new_coordinates[0] < bounds[0] or new_coordinates[0] >= bounds[1]:
             continue
-        if image_pixel_coordinates[1] < 0 or image_pixel_coordinates[1] >= resolution[1]:
+        if new_coordinates[1] < bounds[2] or new_coordinates[1] >= bounds[3]:
             continue
-        density_array[int(image_pixel_coordinates[0]),
-                      int(image_pixel_coordinates[1])] += particle_masses[i]
+        px_rotated[i] = new_coordinates[0]
+        py_rotated[i] = new_coordinates[1]
+    pr.pixelize_sph_kernel_projection(
+        projection_array,
+        px_rotated,
+        py_rotated,
+        smoothing_lengths,
+        particle_masses,
+        particle_densities,
+        np.ones(num_particles),
+        bounds[:4])
 
 
 def create_pixel_array(px, py, particle_masses, particle_densities,
@@ -124,25 +131,3 @@ def sph_kernel_cubic(x):
     else:
         kernel = 0.
     return kernel * C
-
-
-def integrate_q2(q2):
-        # See equation 30 of the SPLASH paper
-        # Our bounds are -sqrt(R*R - q2) and sqrt(R*R-q2)
-        # And our R is always 1; note that our smoothing kernel functions
-        # expect it to run from 0 .. 1, so we multiply the integrand by 2
-        N = 200
-        R = 1
-        R0 = -math.sqrt(R*R-q2)
-        R1 = math.sqrt(R*R-q2)
-        dR = (R1-R0)/N
-        # Set to our bounds
-        integral = 0.0
-        integral += sph_kernel_cubic(math.sqrt(R0*R0 + q2))
-        integral += sph_kernel_cubic(math.sqrt(R1*R1 + q2))
-        # We're going to manually conduct a trapezoidal integration
-        for i in range(1, N):
-            qz = R0 + i * dR
-            integral += 2.0*sph_kernel_cubic(math.sqrt(qz*qz + q2))
-        integral *= (R1-R0)/(2*N)
-        return integral

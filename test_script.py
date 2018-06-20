@@ -7,6 +7,32 @@ from yt.utilities.lib import pixelization_routines as pr
 import matplotlib.pyplot as plt
 import OffAxisProjection.SPH as SPH
 
+
+def off_axis_projection_SPH():
+    num_particles = 5000
+
+    # px and py contains randomly generated values between 0 and 1
+    px = 2*np.random.random(num_particles) - 1
+    py = 2*np.random.random(num_particles) - 1
+    pz = .5 *np.random.random(num_particles) - 0.25
+    particle_masses = np.ones(num_particles)
+    particle_densities = np.ones(num_particles)
+    smoothing_length = np.random.random(num_particles)
+    bounds = [-1, 1, -1, 1, -1, 1]
+    normal_vector = np.array([-2., 2., -5])
+    resolution = (512, 512)
+    for i in range(160):
+        buf = np.zeros(resolution)
+        normal_vector[2] += 0.0625
+        SPH.off_axis_projection_SPH(px, py, pz, particle_masses,
+                                    particle_densities, smoothing_length,
+                                    bounds, buf, normal_vector)
+
+        plt.imsave('SPH_Images/img_' + str(i) + '.png',
+                   np.log10(buf))
+        print('img_' + str(i) + '.png')
+
+
 def make_SPH_projections():
     num_particles = 100
     px = np.random.random(num_particles)
@@ -31,17 +57,8 @@ def make_SPH_projections():
         buf)
     print(buf)
     plt.imsave('../OffAxisProjectionImages/SPH.png', np.log10(buf))
-# def pixelize_sph_kernel_projection(
-#         np.float64_t[:, :] buff,
-#         np.float64_t[:] posx,
-#         np.float64_t[:] posy,
-#         np.float64_t[:] hsml,
-#         np.float64_t[:] pmass,
-#         np.float64_t[:] pdens,
-#         np.float64_t[:] quantity_to_smooth,
-#         bounds,
-#         kernel_name="cubic",
-#         weight_field=None):
+
+
 def make_SPH_projections_yt():
     num_particles = 3000
     px = np.random.random(num_particles)
@@ -96,8 +113,9 @@ def test_integration():
 
 
 def main():
-    make_SPH_projections()
+    #make_SPH_projections()
     #make_SPH_projections_yt()
+    off_axis_projection_SPH()
 
 
 if __name__ == "__main__":
