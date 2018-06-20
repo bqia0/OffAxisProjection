@@ -1,6 +1,7 @@
 import numpy as np
 import OffAxisProjection.OnAxisProjection as OnAP
 import OffAxisProjection.OffAxisProjection as OffAP
+import OffAxisProjection.SPH as SPH
 
 class TestClass(object):
     def test_density_array_correct_sum(self):
@@ -138,14 +139,15 @@ class TestClass(object):
         # px and py contains randomly generated values between 0 and 1
         px = np.random.random(num_particles)
         py = np.random.random(num_particles)
+        pz = np.random.random(num_particles)
         particle_masses = np.random.random(num_particles)
-        bottom_left = [0, 0]
-        top_right = [1, 1]
+        bottom_left = [0, 0, 0]
+        top_right = [1, 1, 1]
         normal_vector = np.array([0, 0, 1])
         resolution = (64, 64)
         projection_array = np.zeros(resolution)
-        OffAP.create_projection(px, py, particle_masses, bottom_left,
-                                top_right, normal_vector, projection_array)
+        OffAP.create_projection(px, py, pz, particle_masses, bottom_left,
+                                top_right, projection_array, normal_vector)
         projection_array_1 = np.zeros(resolution)
         OnAP.create_projection(px, py, particle_masses, bottom_left, top_right,
                                projection_array_1)
@@ -155,9 +157,10 @@ class TestClass(object):
         num_particles = 3000
         px = np.random.random(num_particles)
         py = np.random.random(num_particles)
+        pz = np.random.random(num_particles)
         particle_masses = np.random.random(num_particles)
-        bottom_left = [0, 0]
-        top_right = [1, 1]
+        bottom_left = [0, 0, 0]
+        top_right = [1, 1, 1]
         normal_vector = np.array([3, 5, 6])
         resolution = (512, 512)
         projection_array = np.zeros(resolution)
@@ -165,10 +168,21 @@ class TestClass(object):
         for i in range(3):
             OffAP.create_projection(px[i * 1000: (i+1) * 1000],
                                     py[i * 1000: (i+1) * 1000],
+                                    pz[i * 1000: (i+1) * 1000],
                                     particle_masses[i * 1000: (i+1) * 1000],
                                     bottom_left,
-                                    top_right, normal_vector, projection_array)
+                                    top_right, projection_array, normal_vector)
 
-        OffAP.create_projection(px, py, particle_masses, bottom_left,
-                                top_right, normal_vector, projection_array_1)
-        assert np.allclose(projection_array, projection_array_1, rtol=1e-09)
+        OffAP.create_projection(px, py, pz, particle_masses, bottom_left,
+                                top_right, projection_array_1, normal_vector)
+        assert np.allclose(projection_array, projection_array_1, rtol=1e-05)
+
+    def test_integration(self):
+        passed = True
+        for i in range(1000):
+            num = np.random.random()
+            if not np.isclose(SPH.get_dimensionless_2D_kernel(num),
+                              SPH.integrate_q2((num) ** 2), rtol=1e-09):
+                passed = False
+                break
+        assert passed
