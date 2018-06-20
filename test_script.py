@@ -8,17 +8,17 @@ import matplotlib.pyplot as plt
 import OffAxisProjection.SPH as SPH
 
 def make_SPH_projections():
-    num_particles = 500
+    num_particles = 100
     px = np.random.random(num_particles)
     py = np.random.random(num_particles)
     particle_masses = np.random.random(num_particles)
     particle_densities = np.random.random(num_particles)
     smoothing_length = np.random.random(num_particles)
-    smoothing_quantity = np.ones(num_particles)
-    bounds = [0, 1, 0, 1]
+    #smoothing_quantity = np.ones(num_particles)
+    #bounds = [0, 1, 0, 1]
     bottom_left = [0, 0]
     top_right = [1, 1]
-    resolution = (512, 512)
+    resolution = (128, 128)
     buf = np.zeros(resolution)
     SPH.create_pixel_array(
         px,
@@ -30,8 +30,42 @@ def make_SPH_projections():
         top_right,
         buf)
     print(buf)
-    plt.imsave('../OffAxisProjectionImages/SPH.png', buf)
-
+    plt.imsave('../OffAxisProjectionImages/SPH.png', np.log10(buf))
+# def pixelize_sph_kernel_projection(
+#         np.float64_t[:, :] buff,
+#         np.float64_t[:] posx,
+#         np.float64_t[:] posy,
+#         np.float64_t[:] hsml,
+#         np.float64_t[:] pmass,
+#         np.float64_t[:] pdens,
+#         np.float64_t[:] quantity_to_smooth,
+#         bounds,
+#         kernel_name="cubic",
+#         weight_field=None):
+def make_SPH_projections_yt():
+    num_particles = 3000
+    px = np.random.random(num_particles)
+    py = np.random.random(num_particles)
+    particle_masses = np.random.random(num_particles)
+    particle_densities = np.random.random(num_particles)
+    smoothing_length = np.random.random(num_particles)
+    #smoothing_quantity = np.ones(num_particles)
+    bounds = [0, 1, 0, 1]
+    bottom_left = [0, 0]
+    top_right = [1, 1]
+    resolution = (512, 512)
+    buf = np.zeros(resolution)
+    pr.pixelize_sph_kernel_projection(
+        buf,
+        px,
+        py,
+        smoothing_length,
+        particle_masses,
+        particle_densities,
+        np.ones(num_particles),
+        bounds)
+    #print(buf)
+    plt.imsave('../OffAxisProjectionImages/SPH.png', np.log10(buf))
 
 def make_projections():
     num_particles = 96000
@@ -63,6 +97,8 @@ def test_integration():
 
 def main():
     make_SPH_projections()
+    #make_SPH_projections_yt()
+
 
 if __name__ == "__main__":
     # if you call this script from the command line (the shell) it will
