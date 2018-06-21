@@ -11,7 +11,6 @@ def off_axis_projection_SPH(px, py, pz, particle_masses, particle_densities,
     if np.allclose(normal_vector, np.array([0., 0., 0.]), rtol=1e-09):
         return
 
-    resolution = np.shape(projection_array)
     num_particles = min(np.size(px), np.size(py), np.size(pz),
                         np.size(particle_masses))
     rotation_matrix = OffAP.get_rotation_matrix(normal_vector)
@@ -27,13 +26,9 @@ def off_axis_projection_SPH(px, py, pz, particle_masses, particle_densities,
             continue
         if z_coordinate < bounds[4] or z_coordinate > bounds[5]:
             continue
-        coordinate_matrix = np.array([x_coordinate, y_coordinate, z_coordinate], dtype='float_')
+        coordinate_matrix = np.array([x_coordinate, y_coordinate,
+                                      z_coordinate], dtype='float_')
         new_coordinates = rotation_matrix @ coordinate_matrix
-
-        # image_pixel_coordinates = pixel_coordinates(new_coordinates[0],
-        #                                             new_coordinates[1],
-        #                                             top_right, bottom_left,
-        #                                             resolution)
         if new_coordinates[0] < bounds[0] or new_coordinates[0] >= bounds[1]:
             continue
         if new_coordinates[1] < bounds[2] or new_coordinates[1] >= bounds[3]:
