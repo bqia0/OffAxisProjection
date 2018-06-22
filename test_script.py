@@ -28,9 +28,10 @@ def off_axis_projection_SPH():
                                     particle_densities, smoothing_length,
                                     bounds, buf, normal_vector)
 
-        plt.imsave('SPH_Images/img_' + str(i) + '.png',
-                   np.log10(buf))
+        plt.imsave('SPH_Images/img_' + str(i) + '.png',np.log10(buf),
+                   vmin=0., vmax=7.5)
         print('img_' + str(i) + '.png')
+        print(np.log10(np.amax(buf)))
 
 
 def make_SPH_projections():
